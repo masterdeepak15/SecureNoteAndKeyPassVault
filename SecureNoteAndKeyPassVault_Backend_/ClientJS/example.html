@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-signin-client_id" content="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com">
+    <title>Secure Notes Client - Example Usage</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-left: 4px solid #007bff;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .output {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .info {
+            color: #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Secure Notes Client - Example Usage</h1>
+        <p>This demonstrates the RSA encryption-based note and password manager client.</p>
+
+        <!-- Authentication Section -->
+        <div class="section">
+            <h2>Authentication</h2>
+            <div>
+                <h3>Register</h3>
+                <input type="email" id="registerEmail" placeholder="Email">
+                <input type="password" id="registerPassword" placeholder="Password">
+                <input type="password" id="registerConfirmPassword" placeholder="Confirm Password">
+                <button onclick="register()">Register</button>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <h3>Login</h3>
+                <input type="email" id="loginEmail" placeholder="Email">
+                <input type="password" id="loginPassword" placeholder="Password">
+                <button onclick="login()">Login</button>
+                
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+                    <p style="margin: 0 0 10px 0; color: #666;">Or sign in with Google:</p>
+                    <div id="g_id_onload"
+                         data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                         data-context="signin"
+                         data-ux_mode="popup"
+                         data-callback="handleGoogleSignIn"
+                         data-auto_prompt="false">
+                    </div>
+                    
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-shape="rectangular"
+                         data-theme="outline"
+                         data-text="signin_with"
+                         data-size="large"
+                         data-logo_alignment="left">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="testEncryption()">🧪 Test Local Encryption</button>
+                <button onclick="performHandshake()">🤝 Perform RSA Handshake</button>
+                <button onclick="logout()">Logout</button>
+            </div>
+            
+            <div id="authOutput" class="output"></div>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="section">
+            <h2>Notes Management</h2>
+            <div>
+                <h3>Create Note</h3>
+                <input type="text" id="noteTitle" placeholder="Note Title">
+                <textarea id="noteContent" placeholder="Note Content" rows="4"></textarea>
+                <button onclick="createNote()">Create Note</button>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="getAllNotes()">Get All Notes</button>
+            </div>
+            
+            <div id="notesOutput" class="output"></div>
+        </div>
+
+        <!-- Password Manager Section -->
+        <div class="section">
+            <h2>Password Manager</h2>
+            <div>
+                <h3>Create Password Entry</h3>
+                <input type="text" id="pwdSiteName" placeholder="Site Name (e.g., GitHub)">
+                <input type="text" id="pwdUsername" placeholder="Username/Email">
+                <input type="password" id="pwdPassword" placeholder="Password">
+                <input type="text" id="pwdUrl" placeholder="URL">
+                <input type="text" id="pwdServerIp" placeholder="Server IP (optional)">
+                <input type="text" id="pwdHostname" placeholder="Hostname (optional)">
+                <textarea id="pwdNotes" placeholder="Additional Notes (optional)" rows="3"></textarea>
+                <button onclick="createPasswordEntry()">Create Password Entry</button>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="getAllPasswordEntries()">Get All Password Entries</button>
+            </div>
+            
+            <div id="passwordsOutput" class="output"></div>
+        </div>
+    </div>
+
+    <script src="SecureNotesClient.js"></script>
+    <script>
+        // Initialize client (change URL to your API endpoint)
+        const client = new SecureNotesClient('https://localhost:7000');
+
+        // ==================== Google Sign-In Handler ====================
+        
+        async function handleGoogleSignIn(response) {
+            try {
+                displayOutput('authOutput', '🔄 Signing in with Google...', 'info');
+                
+                // Send Google ID token to our backend
+                const result = await client.googleLogin(response.credential);
+                
+                // Auto-handshake if server provides handshake data
+                if (result.handshake) {
+                    displayOutput('authOutput', 
+                        `✅ Google Sign-In successful!\n` +
+                        `Email: ${result.email}\n` +
+                        `Name: ${result.name}\n` +
+                        `${result.isNewUser ? '(New account created)\n' : ''}` +
+                        `\n🤝 Auto-initiating handshake...`, 'success');
+                    
+                    // Import server public key from login response
+                    client.sessionId = result.handshake.sessionId;
+                    client.serverPublicKey = await client.importPublicKeyFromPem(result.handshake.serverPublicKey);
+                    
+                    // Generate client key pair if not exists
+                    if (!client.clientKeyPair) {
+                        await client.generateClientKeyPair();
+                    }
+                    
+                    // Complete handshake
+                    await client.completeHandshake();
+                    
+                    displayOutput('authOutput', 
+                        `✅ Google Sign-In successful!\n` +
+                        `Email: ${result.email}\n` +
+                        `Name: ${result.name}\n` +
+                        `${result.isNewUser ? '🎉 New account created!\n' : ''}` +
+                        `\n✅ Handshake completed automatically!\n` +
+                        `Session ID: ${client.sessionId}`, 'success');
+                } else {
+                    displayOutput('authOutput', 
+                        `✅ Google Sign-In successful!\n` +
+                        `Email: ${result.email}\n` +
+                        `Name: ${result.name}`, 'success');
+                }
+            } catch (error) {
+                displayOutput('authOutput', `❌ Google Sign-In failed: ${error.message}`, 'error');
+                console.error('Google Sign-In error:', error);
+            }
+        }
+
+        // ==================== Authentication Functions ====================
+
+        async function register() {
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            
+            try {
+                const result = await client.register(email, password, confirmPassword);
+                displayOutput('authOutput', `✅ Registration successful: ${JSON.stringify(result, null, 2)}`, 'success');
+            } catch (error) {
+                displayOutput('authOutput', `❌ Registration failed: ${error.message}`, 'error');
+            }
+        }
+
+    /**
+     * User Login - Now includes auto-handshake initiation
+     */
+    async function login() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        try {
+            const result = await client.login(email, password);
+            
+            // Auto-handshake if server provides handshake data
+            if (result.handshake) {
+                displayOutput('authOutput', `✅ Login successful!\nToken: ${result.token.substring(0, 50)}...\n\n🤝 Auto-initiating handshake...`, 'success');
+                
+                // Import server public key from login response
+                client.sessionId = result.handshake.sessionId;
+                client.serverPublicKey = await client.importPublicKeyFromPem(result.handshake.serverPublicKey);
+                
+                // Generate client key pair if not exists
+                if (!client.clientKeyPair) {
+                    await client.generateClientKeyPair();
+                }
+                
+                // Complete handshake
+                await client.completeHandshake();
+                
+                displayOutput('authOutput', `✅ Login successful!\nToken: ${result.token.substring(0, 50)}...\n\n✅ Handshake completed automatically!\nSession ID: ${client.sessionId}`, 'success');
+            } else {
+                displayOutput('authOutput', `✅ Login successful!\nToken: ${result.token.substring(0, 50)}...\nExpires: ${result.expiration}`, 'success');
+            }
+        } catch (error) {
+            displayOutput('authOutput', `❌ Login failed: ${error.message}`, 'error');
+        }
+    }
+
+        async function performHandshake() {
+            try {
+                await client.performHandshake();
+                displayOutput('authOutput', `✅ RSA Handshake completed successfully!\nSession ID: ${client.sessionId}`, 'success');
+            } catch (error) {
+                displayOutput('authOutput', `❌ Handshake failed: ${error.message}`, 'error');
+            }
+        }
+
+        function logout() {
+            client.logout();
+            displayOutput('authOutput', '✅ Logged out successfully', 'info');
+        }
+
+        async function testEncryption() {
+            try {
+                displayOutput('authOutput', '🧪 Testing local encryption... (check console for details)', 'info');
+                const result = await client.testLocalEncryption();
+                if (result) {
+                    displayOutput('authOutput', '✅ Local encryption test PASSED! RSA is working correctly.', 'success');
+                } else {
+                    displayOutput('authOutput', '❌ Local encryption test FAILED! Check console for details.', 'error');
+                }
+            } catch (error) {
+                displayOutput('authOutput', `❌ Test failed: ${error.message}\nCheck browser console for details.`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+
+        // ==================== Notes Functions ====================
+
+    /**
+     * Creates a new note (encrypts title and content before sending)
+     */
+    async function createNote() {
+        const title = document.getElementById('noteTitle').value;
+        const content = document.getElementById('noteContent').value;
+        
+        if (!client.sessionId) {
+            displayOutput('notesOutput', '❌ Please complete handshake first (login again if needed)', 'error');
+            return;
+        }
+        
+        try {
+            const note = await client.createNote(title, content);
+            displayOutput('notesOutput', `✅ Note created successfully!\n${JSON.stringify(note, null, 2)}`, 'success');
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteContent').value = '';
+        } catch (error) {
+            displayOutput('notesOutput', `❌ Failed to create note: ${error.message}`, 'error');
+        }
+    }
+
+        async function getAllNotes() {
+            try {
+                const notes = await client.getAllNotes();
+                displayOutput('notesOutput', `✅ Retrieved ${notes.length} notes:\n${JSON.stringify(notes, null, 2)}`, 'success');
+            } catch (error) {
+                displayOutput('notesOutput', `❌ Failed to get notes: ${error.message}`, 'error');
+            }
+        }
+
+        // ==================== Password Manager Functions ====================
+
+        async function createPasswordEntry() {
+            const siteName = document.getElementById('pwdSiteName').value;
+            const username = document.getElementById('pwdUsername').value;
+            const password = document.getElementById('pwdPassword').value;
+            const url = document.getElementById('pwdUrl').value;
+            const serverIp = document.getElementById('pwdServerIp').value || null;
+            const hostname = document.getElementById('pwdHostname').value || null;
+            const notes = document.getElementById('pwdNotes').value || null;
+            
+            try {
+                const entry = await client.createPasswordEntry(
+                    siteName, username, password, url, serverIp, hostname, notes
+                );
+                displayOutput('passwordsOutput', `✅ Password entry created successfully!\n${JSON.stringify(entry, null, 2)}`, 'success');
+                // Clear form
+                document.getElementById('pwdSiteName').value = '';
+                document.getElementById('pwdUsername').value = '';
+                document.getElementById('pwdPassword').value = '';
+                document.getElementById('pwdUrl').value = '';
+                document.getElementById('pwdServerIp').value = '';
+                document.getElementById('pwdHostname').value = '';
+                document.getElementById('pwdNotes').value = '';
+            } catch (error) {
+                displayOutput('passwordsOutput', `❌ Failed to create password entry: ${error.message}`, 'error');
+            }
+        }
+
+        async function getAllPasswordEntries() {
+            try {
+                const entries = await client.getAllPasswordEntries();
+                displayOutput('passwordsOutput', `✅ Retrieved ${entries.length} password entries:\n${JSON.stringify(entries, null, 2)}`, 'success');
+            } catch (error) {
+                displayOutput('passwordsOutput', `❌ Failed to get password entries: ${error.message}`, 'error');
+            }
+        }
+
+        // ==================== Utility Functions ====================
+
+        function displayOutput(elementId, message, type = 'info') {
+            const output = document.getElementById(elementId);
+            output.textContent = message;
+            output.className = `output ${type}`;
+        }
+    </script>
+</body>
+</html>
