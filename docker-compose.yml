@@ -9,4 +9,8 @@ services:
       - ./data:/app/backend/data
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      # Optional: Set custom JWT key (minimum 32 characters)
+      # - Jwt__Key=YourCustomSecretKeyHere_MinimumLength32Characters!
+      # Optional: Configure Google OAuth Client ID
+      # - Google__ClientId=your-google-client-id.apps.googleusercontent.com
     restart: unless-stopped

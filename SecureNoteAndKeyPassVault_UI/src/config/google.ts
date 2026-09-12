@@ -12,4 +12,4 @@
  * 6. Add Authorized JavaScript origins: your app URL (e.g., https://id-preview--6aade48d-ed42-47fd-8594-27b900511d7a.lovable.app)
  * 7. Copy the Client ID and paste it below
  */
-export const GOOGLE_CLIENT_ID = 'yourClientID.apps.googleusercontent.com';
+export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'yourClientID.apps.googleusercontent.com';

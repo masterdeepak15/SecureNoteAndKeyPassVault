@@ -25,6 +25,12 @@ const GoogleSignInButton = ({ onSuccess, disabled, text = 'signin_with' }: Googl
   const buttonRef = useRef<HTMLDivElement>(null);
   const scriptLoaded = useRef(false);
 
+  const isConfigured = Boolean(
+    GOOGLE_CLIENT_ID &&
+    !GOOGLE_CLIENT_ID.includes('yourClientID') &&
+    !GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID')
+  );
+
   const handleCredentialResponse = useCallback((response: any) => {
     if (response.credential) {
       onSuccess(response.credential);
@@ -32,11 +38,11 @@ const GoogleSignInButton = ({ onSuccess, disabled, text = 'signin_with' }: Googl
   }, [onSuccess]);
 
   useEffect(() => {
-    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') return;
+    if (!isConfigured) return;
 
     const initGoogle = () => {
       if (!window.google || !buttonRef.current) return;
-      
+
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse,
@@ -67,10 +73,10 @@ const GoogleSignInButton = ({ onSuccess, disabled, text = 'signin_with' }: Googl
       script.onload = initGoogle;
       document.head.appendChild(script);
     }
-  }, [handleCredentialResponse, text]);
+  }, [handleCredentialResponse, text, isConfigured]);
 
   // Fallback button when Client ID not configured
-  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
+  if (!isConfigured) {
     return (
       <button
         type="button"
