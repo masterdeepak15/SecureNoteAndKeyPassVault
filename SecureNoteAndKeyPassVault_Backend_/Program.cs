@@ -53,8 +53,8 @@ builder.Services.AddSwaggerGen(c =>
 
 // Configure SQLite Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") 
-        ?? "Data Source=securenotesdb.db"));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? "Data Source=data/securenotesdb.db"));
 
 // Configure Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -126,6 +126,19 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.Migrate();
+
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    if (!userManager.Users.Any())
+    {
+        var adminUser = new ApplicationUser
+        {
+            UserName = "admin@securenote.local",
+            Email = "admin@securenote.local",
+            EmailConfirmed = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        await userManager.CreateAsync(adminUser, "Admin@123456");
+    }
 }
 
 // Configure the HTTP request pipeline

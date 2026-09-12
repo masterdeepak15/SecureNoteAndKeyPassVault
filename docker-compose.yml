@@ -1,0 +1,12 @@
+services:
+  securenote:
+    build: .
+    image: securenote:latest
+    container_name: securenote
+    ports:
+      - "8080:80"
+    volumes:
+      - ./data:/app/backend/data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    restart: unless-stopped
