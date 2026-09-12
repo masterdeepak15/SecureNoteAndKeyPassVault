@@ -19,6 +19,25 @@ Most modern note and password management solutions store your sensitive secrets 
 
 ---
 
+## 📸 Screenshots & UI Showcase
+
+| 🔐 Authentication & Google SSO | 📝 Encrypted Notes Vault |
+|---|---|
+| ![Secure Authentication](assets/Screenshot%202026-09-12%20202627.png) | ![Notes Vault](assets/Screenshot%202026-09-12%20202705.png) |
+| *Master credentials & Google OAuth 2.0 Single Sign-On.* | *Rich-text encrypted notes with end-to-end payload protection.* |
+
+| 🔑 KeyPass Password Manager | ⚡ Password Generator Modal |
+|---|---|
+| ![Passwords Vault](assets/Screenshot%202026-09-12%20202725.png) | ![Password Generator](assets/Screenshot%202026-09-12%20202759.png) |
+| *Categorized vault with one-click copy and search.* | *Entropy strength analyzer with customizable character sets.* |
+
+| 📱 Device & Session Management | ⚙️ Vault Settings & Data Export |
+|---|---|
+| ![Session Management](assets/Screenshot%202026-09-12%20202822.png) | ![Security & Settings](assets/Screenshot%202026-09-12%20202851.png) |
+| *Active device session tracking and one-click remote revocation.* | *Full JSON vault export, storage metrics, and account controls.* |
+
+---
+
 ## 🚀 Quick Start (Docker Compose)
 
 ### 1. Prerequisites
